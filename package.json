@@ -1,0 +1,2 @@
+{ "name": "agent-18-voice-agent-latency", "version": "1.0.0", "type": "module", "private": true,
+  "scripts": { "test": "node --test test/", "bench": "node evals/bench.mjs", "bench:live": "bash evals/live.sh", "build": "node build.mjs" } }

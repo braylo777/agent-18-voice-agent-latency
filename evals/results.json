@@ -1,0 +1,80 @@
+{
+ "offline": {
+  "calls": 60,
+  "reps": 50,
+  "turns_per_call": 3.3333,
+  "outcomes": {
+   "booked": 42,
+   "no_load": 12,
+   "declined": 6
+  },
+  "guardrail_violations": 0,
+  "stages": {
+   "stt": {
+    "p50_ms": 0.0003,
+    "p95_ms": 0.0007,
+    "n": 10000
+   },
+   "nlu": {
+    "p50_ms": 0.0018,
+    "p95_ms": 0.004,
+    "n": 10000
+   },
+   "lookup": {
+    "p50_ms": 0.0001,
+    "p95_ms": 0.0011,
+    "n": 10000
+   },
+   "negotiate": {
+    "p50_ms": 0.0001,
+    "p95_ms": 0.0003,
+    "n": 10000
+   },
+   "tts_first_chunk": {
+    "p50_ms": 0.0003,
+    "p95_ms": 0.0008,
+    "n": 10000
+   },
+   "summary": {
+    "p50_ms": 0.0002,
+    "p95_ms": 0.0004,
+    "n": 3000
+   }
+  },
+  "cache": {
+   "lookup_p50_ms_nocache": 0.0014,
+   "lookup_p50_ms_cache": 0.0003,
+   "lookup_p95_ms_nocache": 0.0073,
+   "lookup_p95_ms_cache": 0.0006,
+   "hit_rate": 0.9833
+  },
+  "batching": {
+   "summary_requests_unbatched": 60,
+   "summary_requests_batched": 8
+  },
+  "optimizer": {
+   "target": {
+    "quality": 0.95,
+    "p95ms": 800
+   },
+   "routed": {
+    "dialog": "template",
+    "summary": "template"
+   },
+   "naive_usd_per_call": 0.00028680278333333327,
+   "optimized_usd_per_call": 0,
+   "naive_model_requests": 260,
+   "optimized_model_requests": 0,
+   "naive_tokens_in": 25405,
+   "naive_tokens_out": 4334
+  }
+ },
+ "live": {
+  "n": 40,
+  "ttft_ms_p50": 108.3,
+  "ttft_ms_p95": 191.3,
+  "total_ms_p50": 108.6,
+  "total_ms_p95": 191.4,
+  "measured_from": "box (curl, includes network+TLS), 2026-10-27"
+ }
+}
