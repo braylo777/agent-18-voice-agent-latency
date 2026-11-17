@@ -10,10 +10,10 @@ A production-style inbound carrier-call agent for a freight broker, running as a
 
 Guardrails: never offer above the load's max rate, never expose max/target (`/api/loads` strips them), require an MC number before quoting, max 3 counter rounds, then decline.
 
-Inference optimizer (`route()` in `src/core.js`): for each turn type it picks the **cheapest config whose measured quality and p95 latency meet the target** (default quality ≥ 0.95, p95 ≤ 800 ms). Prices are Cloudflare Workers AI's published per-M-token rates (read 2026-10-27). Configs with no measured profile are never chosen. Deterministic turns use the lane cache, and summaries are batched ×8.
+Inference optimizer (`route()` in `src/agent18/core.py` and `worker/src/core.rs`): for each turn type it picks the **cheapest config whose measured quality and p95 latency meet the target** (default quality ≥ 0.95, p95 ≤ 800 ms). Prices are Cloudflare Workers AI's published per-M-token rates (read 2026-10-27). Configs with no measured profile are never chosen. Deterministic turns use the lane cache, and summaries are batched ×8.
 
 ## Data
-60 **synthetic** carrier calls (seeded, `evals/calls.mjs`) against 40 synthetic loads. These are not real transcripts.
+60 **synthetic** carrier calls (seeded, `evals/calls.py`) against 40 synthetic loads. These are not real transcripts.
 
 ## Results (real, from `evals/results.json`, measured 2026-10-27)
 **Per-stage CPU latency** (Node 22 on the box, 50 reps × 60 calls):
@@ -53,10 +53,12 @@ Caveats, stated plainly:
 
 ## How to run
 ```bash
-npm test            # 18 offline tests (guardrails, router, cache, batcher, pipeline)
-npm run bench       # offline per-stage + optimizer benchmark -> evals/results.json
-npm run bench:live  # live TTFT/total against the deployed Worker
-npm run build       # dist/worker.js;  or: npx wrangler deploy
+python3 -m pytest                    # 6 Python test functions (guardrails, router, cache, batcher, pipeline)
+cd worker && cargo test              # 3 Rust test functions
+python3 evals/bench.py --write       # offline per-stage + optimizer benchmark -> evals/results.json
+python3 evals/live.py                # live TTFT/total against the deployed Worker
+cd worker && cargo run --release --example bench   # Rust per-stage latency
+cd worker && worker-build --release  # build the Worker (wasm); then: wrangler deploy
 ```
 No dependencies. Free tier only. Rollback tag: `v0-rollback`. CI job in `ci/github-actions-ci.yml` (copy to `.github/workflows/` to enable).
 
@@ -64,3 +66,6 @@ No dependencies. Free tier only. Rollback tag: `v0-rollback`. CI job in `ci/gith
 - Profile llama-3.2-1b, llama-3.1-8b-fast and llama-3.1-70b-fast on the dialog and summary turns: quality vs template/gold, p50/p95, TTFT. Then rerun the router for real model-vs-model cost and latency savings.
 - Replace the chars/4 estimate with the token usage the API returns.
 - Optional real STT/TTS (`@cf/openai/whisper`, a TTS model) to replace the text simulation.
+
+## Port note
+The pipeline now runs in Rust (the Worker) with a Python reference. The old JavaScript, the Python and the Rust code produce identical loads, 60 seeded calls (every streamed chunk, summary, outcome and rate), NLU results and cost-optimizer numbers. Offline results are reproduced exactly for everything deterministic (outcomes 42 booked / 12 no-load / 6 declined, 0 guardrail violations, hit rate 0.9833, optimizer cost to the last digit). Rust per-stage latency (50 reps x 60 calls, release build): NLU p50 0.0010 ms and p95 0.0017 ms (JavaScript: 0.0018 / 0.0040), STT 0.0003 / 0.0006 (JavaScript 0.0003 / 0.0007), TTS first chunk 0.0008 / 0.0013 (JavaScript 0.0003 / 0.0008, slightly slower because chunks are allocated strings). These are single-thread microbenchmarks, not a network measurement. The previous JavaScript version is on the `legacy-js` branch and the `pre-pycrust` tag.
